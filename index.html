@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title data-i18n="app.title">Budget Tracker Pro</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <div class="brand">
+        <div class="logo">💸</div>
+        <h1 class="title" data-i18n="app.title">Budget Tracker Pro</h1>
+      </div>
+      <div class="controls">
+        <select id="languageSelector" class="select">
+          <option value="en">English</option>
+          <option value="tr">Türkçe</option>
+          <option value="de">Deutsch</option>
+          <option value="mk">Македонски</option>
+        </select>
+        <select id="currencySelector" class="select">
+          <option value="USD">USD $</option>
+          <option value="EUR">EUR €</option>
+          <option value="TRY">TRY ₺</option>
+          <option value="GBP">GBP £</option>
+          <option value="MKD">MKD ден</option>
+        </select>
+        <button id="themeToggle" class="icon-btn" aria-label="Toggle theme">
+          <span class="icon-sun">☀️</span>
+          <span class="icon-moon">🌙</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="container">
+      <section class="stats">
+        <div class="stat income">
+          <div class="stat-label" data-i18n="dashboard.totalIncome">Total Income</div>
+          <div class="stat-value" id="totalIncome">$0.00</div>
+        </div>
+        <div class="stat expense">
+          <div class="stat-label" data-i18n="dashboard.totalExpenses">Total Expenses</div>
+          <div class="stat-value" id="totalExpenses">$0.00</div>
+        </div>
+        <div class="stat net">
+          <div class="stat-label" data-i18n="dashboard.netBalance">Net Balance</div>
+          <div class="stat-value" id="netBalance">$0.00</div>
+        </div>
+      </section>
+
+      <div id="budgetAlert" class="banner hidden">
+        <div class="banner-text">
+          <span>⚠️</span>
+          <span data-i18n="alerts.budgetExceeded">Budget exceeded!</span>
+        </div>
+        <button class="banner-close" id="closeBudgetAlert">×</button>
+      </div>
+
+      <section class="quick">
+        <button id="addIncomeBtn" class="btn success">
+          <span>＋</span><span data-i18n="actions.addIncome">Add Income</span>
+        </button>
+        <button id="addExpenseBtn" class="btn danger">
+          <span>−</span><span data-i18n="actions.addExpense">Add Expense</span>
+        </button>
+        <button id="setBudgetBtn" class="btn primary">
+          <span>🎯</span><span data-i18n="actions.setBudget">Set Budget</span>
+        </button>
+        <button id="manageCategoriesBtn" class="btn">
+          <span>📁</span><span data-i18n="actions.manageCategories">Categories</span>
+        </button>
+      </section>
+
+      <section class="filters">
+        <select id="accountFilter" class="select">
+          <option value="all" data-i18n="filters.allAccounts">All Accounts</option>
+        </select>
+        <select id="categoryFilter" class="select">
+          <option value="all" data-i18n="filters.allCategories">All Categories</option>
+        </select>
+        <input id="dateFrom" class="select" type="date" />
+        <input id="dateTo" class="select" type="date" />
+        <button id="exportBtn" class="btn ghost" data-i18n="actions.export">Export</button>
+        <button id="importBtn" class="btn ghost" data-i18n="actions.import">Import</button>
+        <input type="file" id="importFileInput" accept=".csv,.json" hidden />
+      </section>
+
+      <section class="widgets" id="widgets">
+        <div class="widget" data-widget="transactions" draggable="true">
+          <div class="widget-head">
+            <h2 data-i18n="widgets.transactions">Transactions</h2>
+            <div class="widget-actions">
+              <button class="widget-hide">⧉</button>
+              <button class="widget-toggle">−</button>
+            </div>
+          </div>
+          <div class="widget-body">
+            <ul id="transactionsList" class="list">
+              <li class="empty" data-i18n="messages.noTransactions">No transactions yet. Add your first transaction!</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="widget" data-widget="charts" draggable="true">
+          <div class="widget-head">
+            <h2 data-i18n="widgets.charts">Charts</h2>
+            <div class="widget-actions">
+              <button class="widget-hide">⧉</button>
+              <button class="widget-toggle">−</button>
+            </div>
+          </div>
+          <div class="widget-body">
+            <div class="tabs">
+              <button class="tab active" data-chart="pie" data-i18n="charts.byCategory">By Category</button>
+              <button class="tab" data-chart="bar" data-i18n="charts.monthly">Monthly</button>
+              <button class="tab" data-chart="line" data-i18n="charts.trend">Trend</button>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="mainChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget" data-widget="analytics" draggable="true">
+          <div class="widget-head">
+            <h2 data-i18n="widgets.analytics">Analytics</h2>
+            <div class="widget-actions">
+              <button class="widget-hide">⧉</button>
+              <button class="widget-toggle">−</button>
+            </div>
+          </div>
+          <div class="widget-body analytics">
+            <div class="ana-item">
+              <div class="ana-title" data-i18n="analytics.topCategory">Top Spending Category</div>
+              <div id="topCategory" class="ana-value">-</div>
+            </div>
+            <div class="ana-item">
+              <div class="ana-title" data-i18n="analytics.avgTransaction">Average Transaction</div>
+              <div id="avgTransaction" class="ana-value">$0.00</div>
+            </div>
+            <div class="ana-item">
+              <div class="ana-title" data-i18n="analytics.suggestions">Suggestions</div>
+              <ul id="suggestionsList" class="suggestions"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget" data-widget="budget" draggable="true">
+          <div class="widget-head">
+            <h2 data-i18n="widgets.budget">Budget</h2>
+            <div class="widget-actions">
+              <button class="widget-hide">⧉</button>
+              <button class="widget-toggle">−</button>
+            </div>
+          </div>
+          <div class="widget-body" id="budgetContent">
+            <div class="empty" data-i18n="messages.noBudget">No budget set. Click 'Set Budget' to get started.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="modal" id="transactionModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="modalTitle" data-i18n="modal.addTransaction">Add Transaction</h3>
+        <button class="modal-close" data-close>×</button>
+      </div>
+      <form id="transactionForm" class="modal-body">
+        <div class="grid-2">
+          <label>
+            <span data-i18n="form.type">Type</span>
+            <select id="transactionType" required>
+              <option value="income" data-i18n="form.income">Income</option>
+              <option value="expense" data-i18n="form.expense">Expense</option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="form.amount">Amount</span>
+            <input type="number" id="transactionAmount" step="0.01" min="0" required />
+          </label>
+          <label>
+            <span data-i18n="form.category">Category</span>
+            <select id="transactionCategory" required></select>
+          </label>
+          <label>
+            <span data-i18n="form.account">Account/Card</span>
+            <input type="text" id="transactionAccount" placeholder="Bank or Credit Card" required />
+          </label>
+          <label>
+            <span data-i18n="form.date">Date</span>
+            <input type="date" id="transactionDate" required />
+          </label>
+          <label class="span-2">
+            <span data-i18n="form.notes">Notes (Optional)</span>
+            <textarea id="transactionNotes" rows="3"></textarea>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn ghost" data-close data-i18n="actions.cancel">Cancel</button>
+          <button type="submit" class="btn primary" data-i18n="actions.save">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="budgetModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 data-i18n="modal.setBudget">Set Monthly Budget</h3>
+        <button class="modal-close" data-close>×</button>
+      </div>
+      <form id="budgetForm" class="modal-body">
+        <div class="grid-2">
+          <label>
+            <span data-i18n="form.budgetAmount">Monthly Budget Amount</span>
+            <input type="number" id="budgetAmount" step="0.01" min="0" required />
+          </label>
+          <label>
+            <span data-i18n="form.budgetMonth">Month</span>
+            <input type="month" id="budgetMonth" required />
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn ghost" data-close data-i18n="actions.cancel">Cancel</button>
+          <button type="submit" class="btn primary" data-i18n="actions.save">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="categoriesModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 data-i18n="modal.manageCategories">Manage Categories</h3>
+        <button class="modal-close" data-close>×</button>
+      </div>
+      <div class="modal-body">
+        <div class="grid-2">
+          <div>
+            <div class="subhead" data-i18n="categories.income">Income Categories</div>
+            <div id="incomeCategoriesList" class="chips"></div>
+            <div class="row">
+              <input type="text" id="newIncomeCategory" class="input" placeholder="New income category" />
+              <input type="color" id="newIncomeCategoryColor" value="#10b981" />
+              <button id="addIncomeCategoryBtn" class="btn" data-i18n="actions.add">Add</button>
+            </div>
+          </div>
+          <div>
+            <div class="subhead" data-i18n="categories.expense">Expense Categories</div>
+            <div id="expenseCategoriesList" class="chips"></div>
+            <div class="row">
+              <input type="text" id="newExpenseCategory" class="input" placeholder="New expense category" />
+              <input type="color" id="newExpenseCategoryColor" value="#ef4444" />
+              <button id="addExpenseCategoryBtn" class="btn" data-i18n="actions.add">Add</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn primary" data-close data-i18n="actions.close">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="exportModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 data-i18n="modal.exportData">Export Data</h3>
+        <button class="modal-close" data-close>×</button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <button id="exportCSVBtn" class="btn primary" data-i18n="actions.exportCSV">Export as CSV</button>
+          <button id="exportJSONBtn" class="btn" data-i18n="actions.exportJSON">Export as JSON</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
