@@ -1,3 +1,25 @@
+// Widget toggle ve hide
+document.querySelectorAll(".widget .widget-toggle").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const widgetBody = btn.closest(".widget").querySelector(".widget-body");
+    if (widgetBody.style.display === "none") {
+      widgetBody.style.display = "block";
+      btn.textContent = "−";
+    } else {
+      widgetBody.style.display = "none";
+      btn.textContent = "+";
+    }
+  });
+});
+
+document.querySelectorAll(".widget .widget-hide").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const widget = btn.closest(".widget");
+    widget.style.display = "none";
+    // opsiyonel: localStorage'da kaydet
+  });
+});
+
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 
@@ -739,5 +761,79 @@ const App = (() => {
 
   return { init };
 })();
+
+
+// Transactions state
+let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+
+// Render fonksiyonu
+function renderTransactions() {
+  const list = document.getElementById("transactionsList");
+  list.innerHTML = "";
+  if(transactions.length === 0){
+    const li = document.createElement("li");
+    li.className = "empty";
+    li.textContent = "No transactions yet. Add your first transaction!";
+    list.appendChild(li);
+    updateStats();
+    return;
+  }
+
+  transactions.forEach((t, i) => {
+    const li = document.createElement("li");
+    li.textContent = `${t.type.toUpperCase()}: ${t.desc} - ${t.amount} (${t.account})`;
+    
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "🗑️";
+    delBtn.style.marginLeft = "10px";
+    delBtn.onclick = () => deleteTransaction(i);
+    li.appendChild(delBtn);
+
+    list.appendChild(li);
+  });
+
+  updateStats();
+}
+
+// Add Transaction
+document.getElementById("transactionForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  const type = document.getElementById("transactionType").value;
+  const amount = parseFloat(document.getElementById("transactionAmount").value);
+  const desc = document.getElementById("transactionNotes").value || "No description";
+  const account = document.getElementById("transactionAccount").value;
+  const category = document.getElementById("transactionCategory").value;
+  const date = document.getElementById("transactionDate").value;
+
+  const transaction = { type, amount, desc, account, category, date };
+  transactions.push(transaction);
+  localStorage.setItem("transactions", JSON.stringify(transactions));
+
+  renderTransactions();
+  this.reset();
+});
+
+// Delete Transaction
+function deleteTransaction(index) {
+  transactions.splice(index,1);
+  localStorage.setItem("transactions", JSON.stringify(transactions));
+  renderTransactions();
+}
+
+// Update stats
+function updateStats(){
+  const totalIncome = transactions.filter(t => t.type==="income").reduce((acc,t)=>acc+t.amount,0);
+  const totalExpenses = transactions.filter(t => t.type==="expense").reduce((acc,t)=>acc+t.amount,0);
+  const net = totalIncome - totalExpenses;
+
+  document.getElementById("totalIncome").textContent = `$${totalIncome.toFixed(2)}`;
+  document.getElementById("totalExpenses").textContent = `$${totalExpenses.toFixed(2)}`;
+  document.getElementById("netBalance").textContent = `$${net.toFixed(2)}`;
+}
+
+// Sayfa yüklendiğinde
+window.addEventListener("DOMContentLoaded", () => {
+  renderTransactions();
+});
 
 document.addEventListener('DOMContentLoaded', () => App.init());
